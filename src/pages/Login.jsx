@@ -1,12 +1,14 @@
 // /src/pages/Login.jsx
 import React, { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleAuth = async (e) => {
     e.preventDefault();
@@ -19,14 +21,20 @@ const Login = () => {
           password,
         });
         if (error) throw error;
+
         setMessage("Login successful!");
+        // Redirecionar para Dashboard
+        navigate("/dashboard");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
           password,
         });
         if (error) throw error;
+
         setMessage("Account created! You can now log in.");
+        // Redirecionar para login automático após signup
+        setIsLogin(true);
       }
     } catch (err) {
       setMessage(err.message);
@@ -77,7 +85,7 @@ const Login = () => {
         </p>
 
         {message && (
-          <p className="mt-4 text-center text-sm text-green-400">
+          <p className={`mt-4 text-center text-sm ${isLogin ? "text-green-400" : "text-yellow-400"}`}>
             {message}
           </p>
         )}
