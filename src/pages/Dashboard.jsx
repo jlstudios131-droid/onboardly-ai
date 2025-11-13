@@ -1,21 +1,34 @@
 // /src/pages/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
   const [employees, setEmployees] = useState([]);
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUserAndData = async () => {
+      // Verificar usuário logado
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        navigate("/login");
+        return;
+      }
+      setUser(userData.user);
+
       try {
+        // Buscar Employees
         const { data: employeesData, error: empError } = await supabase
           .from("employees")
           .select("*");
         if (empError) throw empError;
 
+        // Buscar Apps
         const { data: appsData, error: appsError } = await supabase
           .from("apps")
           .select("*");
@@ -30,10 +43,15 @@ const Dashboard = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    fetchUserAndData();
+  }, [navigate]);
 
-  if (loading)
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
+  if (!user || loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
         <p>Loading...</p>
@@ -49,9 +67,15 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        Onboardly AI Dashboard
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Onboardly AI Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-600"
+        >
+          Logout
+        </button>
+      </div>
 
       <div className="grid md:grid-cols-2 gap-8">
         <div className="bg-gray-800 p-6 rounded-2xl shadow">
